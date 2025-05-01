@@ -17,7 +17,12 @@ const allowedOrigins = [
   'http://127.0.0.1:5173',
   'https://snip-stash.vercel.app',
   'https://snipstash.vercel.app',
-  'https://snipstash-client.vercel.app'
+  'https://snipstash-client.vercel.app',
+  'https://snip-stash-88nc.vercel.app',
+  'https://snip-stash-88nc-cwrwfrk3v-ashmita41s-projects.vercel.app',
+  'https://snip-stash-ashmita41.vercel.app',
+  // Allow all Vercel preview deployments
+  /\.vercel\.app$/
 ];
 
 // Middleware
@@ -26,14 +31,32 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps, curl requests)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+    // Check if the origin is in our allowedOrigins array
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
     }
-    return callback(null, true);
+    
+    // Check if origin matches any regex pattern (for Vercel preview deployments)
+    const matched = allowedOrigins.some(pattern => {
+      if (pattern instanceof RegExp) {
+        return pattern.test(origin);
+      }
+      return false;
+    });
+    
+    if (matched) {
+      return callback(null, true);
+    }
+    
+    // Log the blocked origin for debugging
+    console.log(`Blocked origin: ${origin}`);
+    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400 // 24 hours
 }));
 app.use(express.json());
 
@@ -76,6 +99,17 @@ mongoose.connect(process.env.MONGODB_URI, mongooseOptions)
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+
+// Test route to check server status
+app.get('/api/status', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'Server is running!',
+    time: new Date().toISOString(),
+    cors: 'enabled',
+    origin: req.headers.origin || 'unknown'
+  });
+});
 
 // Routes
 app.use('/api/auth', authRoutes);

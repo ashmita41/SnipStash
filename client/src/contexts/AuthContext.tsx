@@ -12,6 +12,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  checkApiConnection: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -72,6 +73,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       );
 
+      // Test API connection
+      try {
+        await checkApiConnection();
+        console.log('API connection successful');
+      } catch (error) {
+        console.error('API connection failed:', error);
+      }
+
       // Check for existing token and user data
       const token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
@@ -83,14 +92,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setIsAuthenticated(true);
           
           // Verify token with server if needed
-          const response = await axios.get('/api/auth/me');
-          if (response.data) {
-            setUser(response.data);
-            // Update stored user data
-            localStorage.setItem('user', JSON.stringify(response.data));
+          try {
+            const response = await axios.get('/api/auth/me');
+            if (response.data) {
+              setUser(response.data);
+              // Update stored user data
+              localStorage.setItem('user', JSON.stringify(response.data));
+            }
+          } catch (verifyError) {
+            console.warn('Could not verify token with server, using stored user data:', verifyError);
           }
-        } catch (error) {
-          console.error('Session validation error:', error);
+        } catch (parseError) {
+          console.error('Session validation error:', parseError);
           // Clear invalid session
           localStorage.removeItem('token');
           localStorage.removeItem('user');
@@ -104,6 +117,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     initAuth();
   }, []);
+
+  const checkApiConnection = async (): Promise<boolean> => {
+    try {
+      const response = await axios.get('/api/status');
+      console.log('API Status:', response.data);
+      return true;
+    } catch (error) {
+      console.error('API Status Check Failed:', error);
+      return false;
+    }
+  };
 
   const login = async (email: string, password: string) => {
     try {
@@ -177,15 +201,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setIsAuthenticated(false);
   };
 
-  if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-    </div>;
-  }
-
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, signup, logout }}>
-      {children}
+    <AuthContext.Provider value={{ user, isAuthenticated, login, signup, logout, checkApiConnection }}>
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }; 

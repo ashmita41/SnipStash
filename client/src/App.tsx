@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import SnippetList from './pages/SnippetList';
 import NewSnippet from './pages/NewSnippet';
+import TestApi from './pages/TestApi';
 import PrivateRoute from './components/PrivateRoute';
 
 // Create router context with future flags
@@ -25,6 +26,7 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/test-api" element={<TestApi />} />
               <Route
                 path="/snippets"
                 element={
