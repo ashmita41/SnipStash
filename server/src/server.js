@@ -20,7 +20,8 @@ const allowedOrigins = [
   'https://snipstash-client.vercel.app',
   'https://snip-stash-88nc.vercel.app',
   'https://snip-stash-88nc-cwrwfrk3v-ashmita41s-projects.vercel.app',
-  'https://snip-stash-ashmita41.vercel.app'
+  'https://snip-stash-ashmita41.vercel.app',
+  'https://snip-stash-mu.vercel.app'
 ];
 
 // Vercel deployment regex pattern
@@ -51,8 +52,7 @@ app.use(cors({
     return callback(new Error(msg), false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept', 'Access-Control-Allow-Origin'],
-  exposedHeaders: ['Access-Control-Allow-Origin'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   credentials: true,
   maxAge: 86400 // 24 hours
 }));

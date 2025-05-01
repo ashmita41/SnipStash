@@ -66,8 +66,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           if (token) {
             config.headers.Authorization = `Bearer ${token}`;
           }
-          // Add CORS specific headers
-          config.headers['Access-Control-Allow-Origin'] = window.location.origin;
           return config;
         },
         (error) => {
@@ -155,8 +153,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const config = {
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Origin': window.location.origin
+          'Accept': 'application/json'
         },
         withCredentials: true
       };
@@ -202,8 +199,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const config = {
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Origin': window.location.origin
+          'Accept': 'application/json'
         },
         withCredentials: true
       };
