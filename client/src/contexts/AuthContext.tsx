@@ -28,6 +28,9 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// API URL configuration
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -39,7 +42,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsLoading(true);
       
       // Set base URL for all requests
-      axios.defaults.baseURL = 'http://localhost:5000';
+      axios.defaults.baseURL = API_URL;
+      console.log('Using API URL:', API_URL);
       
       // Enable CORS credentials
       axios.defaults.withCredentials = false;
