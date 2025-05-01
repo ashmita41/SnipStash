@@ -28,10 +28,6 @@ SnipStash is a modern web application for organizing, storing, and managing code
   - [Frontend Setup](#frontend-setup)
 - [Usage](#usage)
 - [API Documentation](#api-documentation)
-- [Technologies Used](#technologies-used)
-- [Deployment](#deployment)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Installation
 
@@ -115,57 +111,6 @@ SnipStash is a modern web application for organizing, storing, and managing code
 - Mongoose
 - JWT Authentication
 - bcrypt.js
-
-## Deployment
-
-### GitHub Deployment Guide
-
-1. **Initialize Git Repository** (if not already done):
-   ```bash
-   git init
-   ```
-
-2. **Add All Files to Git**:
-   ```bash
-   git add .
-   ```
-
-3. **Commit Your Changes**:
-   ```bash
-   git commit -m "Initial commit: SnipStash application"
-   ```
-
-4. **Link to GitHub Repository**:
-   ```bash
-   git remote add origin https://github.com/ashmita41/SnipStash.git
-   ```
-
-5. **Push Your Code**:
-   ```bash
-   git push -u origin master
-   ```
-
-### Production Deployment Considerations
-
-1. **Environment Variables**: Ensure all sensitive information is stored in environment variables
-2. **Database**: Set up a production MongoDB database
-3. **CORS**: Configure CORS for your production domain
-4. **Error Handling**: Implement comprehensive error handling
-5. **Security**: Review security best practices before deployment
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
