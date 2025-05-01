@@ -31,6 +31,16 @@ interface AuthProviderProps {
 // API URL configuration
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+// Define an axios error type
+interface AxiosError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message: string;
+}
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -110,9 +120,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       setUser(user || { email });
       setIsAuthenticated(true);
-    } catch (error: any) {
-      console.error('Login error:', error.response?.data || error.message);
-      throw new Error(error.response?.data?.message || 'Failed to login');
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      console.error('Login error:', axiosError.response?.data || axiosError.message);
+      throw new Error(axiosError.response?.data?.message || 'Failed to login');
     }
   };
 
@@ -144,13 +155,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       setUser(userData);
       setIsAuthenticated(true);
-    } catch (error: any) {
-      console.error('Registration error:', error.response?.data || error.message);
-      if (error.message.includes('Network Error')) {
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      console.error('Registration error:', axiosError.response?.data || axiosError.message);
+      if (axiosError.message.includes('Network Error')) {
         throw new Error('Network error. Please check if the server is running.');
       } else {
         throw new Error(
-          error.response?.data?.message || 
+          axiosError.response?.data?.message || 
           'Failed to create account. Please try again.'
         );
       }
