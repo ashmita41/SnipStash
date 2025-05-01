@@ -27,6 +27,12 @@ const allowedOrigins = [
 // Vercel deployment regex pattern
 const vercelPattern = /\.vercel\.app$/;
 
+// Add CORS debugging middleware to log all requests
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url} from origin: ${req.headers.origin}`);
+  next();
+});
+
 // Middleware
 app.use(cors({
   origin: function(origin, callback) {
@@ -54,6 +60,8 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
   maxAge: 86400 // 24 hours
 }));
 app.use(express.json());

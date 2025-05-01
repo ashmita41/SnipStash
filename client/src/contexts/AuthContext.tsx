@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 
 interface User {
   email: string;
@@ -29,9 +29,6 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-// API URL configuration
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
 // Define an axios error type
 interface AxiosError {
   response?: {
@@ -47,50 +44,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Configure axios defaults and check for existing session
+  // Initialize auth state
   useEffect(() => {
     const initAuth = async () => {
       setIsLoading(true);
       
-      // Set base URL for all requests
-      axios.defaults.baseURL = API_URL;
-      console.log('Using API URL:', API_URL);
-      
-      // Enable CORS credentials - important for auth tokens
-      axios.defaults.withCredentials = true;
-      
-      // Add request interceptor for JWT token
-      axios.interceptors.request.use(
-        (config) => {
-          const token = localStorage.getItem('token');
-          if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-          }
-          return config;
-        },
-        (error) => {
-          return Promise.reject(error);
-        }
-      );
-      
-      // Add response interceptor for error handling
-      axios.interceptors.response.use(
-        (response) => {
-          return response;
-        },
-        (error) => {
-          // Log CORS errors in a more helpful way
-          if (error.message.includes('Network Error')) {
-            console.error('CORS Error or API Unreachable:', {
-              message: error.message,
-              apiUrl: API_URL,
-              clientOrigin: window.location.origin
-            });
-          }
-          return Promise.reject(error);
-        }
-      );
-
       // Test API connection
       try {
         await checkApiConnection();
@@ -111,7 +69,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           
           // Verify token with server if needed
           try {
-            const response = await axios.get('/api/auth/me');
+            const response = await api.auth.me();
             if (response.data) {
               setUser(response.data);
               // Update stored user data
@@ -138,7 +96,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const checkApiConnection = async (): Promise<boolean> => {
     try {
-      const response = await axios.get('/api/status');
+      const response = await api.status.check();
       console.log('API Status:', response.data);
       return true;
     } catch (error) {
@@ -149,28 +107,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (email: string, password: string) => {
     try {
-      // Set explicit headers for this request
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        withCredentials: true
-      };
-      
       // First check if API is reachable and CORS is configured properly
       try {
-        const statusCheck = await axios.get('/api/status', config);
+        const statusCheck = await api.status.check();
         console.log('API Status before login:', statusCheck.data);
       } catch (statusError) {
         console.error('API Status check failed before login:', statusError);
         throw new Error('API is unreachable. Please check your connection and CORS configuration.');
       }
       
-      const response = await axios.post('/api/auth/login', {
-        email,
-        password,
-      }, config);
+      const response = await api.auth.login({ email, password });
       
       const { token, user } = response.data;
       
@@ -195,28 +141,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       console.log('Attempting to register with:', { email });
       
-      // Set explicit headers for this request
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        withCredentials: true
-      };
-      
       // First check if API is reachable and CORS is configured properly
       try {
-        const statusCheck = await axios.get('/api/status', config);
+        const statusCheck = await api.status.check();
         console.log('API Status before signup:', statusCheck.data);
       } catch (statusError) {
         console.error('API Status check failed before signup:', statusError);
         throw new Error('API is unreachable. Please check your connection and CORS configuration.');
       }
       
-      const response = await axios.post('/api/auth/signup', {
-        email,
-        password,
-      }, config);
+      const response = await api.auth.signup({ email, password });
       
       console.log('Registration response:', response.data);
       const { token } = response.data;
@@ -246,7 +180,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    delete axios.defaults.headers.common['Authorization'];
     setUser(null);
     setIsAuthenticated(false);
   };

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 
 const SUPPORTED_LANGUAGES = [
   'JavaScript',
@@ -57,7 +57,8 @@ const SnippetForm = () => {
     try {
       const tags = generateTags(code, language);
       
-      await axios.post('http://localhost:5000/api/snippets', {
+      console.log('Creating snippet:', { title, code, language, tags });
+      await api.snippets.create({
         title,
         code,
         language,
@@ -66,6 +67,7 @@ const SnippetForm = () => {
 
       navigate('/snippets');
     } catch (err: any) {
+      console.error('Error creating snippet:', err);
       setError(err.response?.data?.message || 'Failed to create snippet');
     } finally {
       setIsLoading(false);

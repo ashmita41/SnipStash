@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import SnippetCard from '../components/SnippetCard';
 import TagFilterBar from '../components/TagFilterBar';
 import SearchBar from '../components/SearchBar';
+import api from '../services/api';
 
 interface Snippet {
   _id: string;
@@ -29,10 +29,12 @@ const SnippetList = () => {
   useEffect(() => {
     const fetchSnippets = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/snippets');
+        const response = await api.snippets.getAll();
+        console.log('Snippets response:', response.data);
         setSnippets(response.data);
         setFilteredSnippets(response.data);
       } catch (err: any) {
+        console.error('Error fetching snippets:', err);
         setError(err.response?.data?.message || 'Failed to fetch snippets');
       } finally {
         setIsLoading(false);
