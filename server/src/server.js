@@ -50,8 +50,9 @@ app.use(cors({
     const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
     return callback(new Error(msg), false);
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept', 'Access-Control-Allow-Origin'],
+  exposedHeaders: ['Access-Control-Allow-Origin'],
   credentials: true,
   maxAge: 86400 // 24 hours
 }));
@@ -111,6 +112,11 @@ app.get('/api/status', (req, res) => {
 // CORS debug endpoint
 app.get('/api/cors-debug', (req, res) => {
   const headers = req.headers;
+  const originHeaderValue = headers.origin;
+  const originAllowed = originHeaderValue ? 
+    allowedOrigins.includes(originHeaderValue) || vercelPattern.test(originHeaderValue) : 
+    'No origin to check';
+  
   res.json({
     message: 'CORS debug information',
     timestamp: new Date().toISOString(),
@@ -118,6 +124,8 @@ app.get('/api/cors-debug', (req, res) => {
     host: headers.host,
     allowedOrigins: allowedOrigins,
     isVercelDomain: headers.origin ? vercelPattern.test(headers.origin) : 'no origin',
+    originAllowed: originAllowed,
+    corsConfigured: true,
     headers: {
       ...headers
     }

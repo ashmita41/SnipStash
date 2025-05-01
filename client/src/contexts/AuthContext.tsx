@@ -56,8 +56,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       axios.defaults.baseURL = API_URL;
       console.log('Using API URL:', API_URL);
       
-      // Enable CORS credentials
-      axios.defaults.withCredentials = false;
+      // Enable CORS credentials - important for auth tokens
+      axios.defaults.withCredentials = true;
       
       // Add request interceptor for JWT token
       axios.interceptors.request.use(
@@ -66,9 +66,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           if (token) {
             config.headers.Authorization = `Bearer ${token}`;
           }
+          // Add CORS specific headers
+          config.headers['Access-Control-Allow-Origin'] = window.location.origin;
           return config;
         },
         (error) => {
+          return Promise.reject(error);
+        }
+      );
+      
+      // Add response interceptor for error handling
+      axios.interceptors.response.use(
+        (response) => {
+          return response;
+        },
+        (error) => {
+          // Log CORS errors in a more helpful way
+          if (error.message.includes('Network Error')) {
+            console.error('CORS Error or API Unreachable:', {
+              message: error.message,
+              apiUrl: API_URL,
+              clientOrigin: window.location.origin
+            });
+          }
           return Promise.reject(error);
         }
       );
@@ -131,10 +151,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (email: string, password: string) => {
     try {
+      // Set explicit headers for this request
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Origin': window.location.origin
+        },
+        withCredentials: true
+      };
+      
+      // First check if API is reachable and CORS is configured properly
+      try {
+        const statusCheck = await axios.get('/api/status', config);
+        console.log('API Status before login:', statusCheck.data);
+      } catch (statusError) {
+        console.error('API Status check failed before login:', statusError);
+        throw new Error('API is unreachable. Please check your connection and CORS configuration.');
+      }
+      
       const response = await axios.post('/api/auth/login', {
         email,
         password,
-      });
+      }, config);
       
       const { token, user } = response.data;
       
@@ -147,7 +186,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error: unknown) {
       const axiosError = error as AxiosError;
       console.error('Login error:', axiosError.response?.data || axiosError.message);
-      throw new Error(axiosError.response?.data?.message || 'Failed to login');
+      if (axiosError.message.includes('Network Error')) {
+        throw new Error('Network error or CORS issue. Please check that the server allows requests from ' + window.location.origin);
+      } else {
+        throw new Error(axiosError.response?.data?.message || 'Failed to login');
+      }
     }
   };
 
@@ -159,9 +202,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const config = {
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
+          'Accept': 'application/json',
+          'Origin': window.location.origin
+        },
+        withCredentials: true
       };
+      
+      // First check if API is reachable and CORS is configured properly
+      try {
+        const statusCheck = await axios.get('/api/status', config);
+        console.log('API Status before signup:', statusCheck.data);
+      } catch (statusError) {
+        console.error('API Status check failed before signup:', statusError);
+        throw new Error('API is unreachable. Please check your connection and CORS configuration.');
+      }
       
       const response = await axios.post('/api/auth/signup', {
         email,
@@ -183,7 +237,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const axiosError = error as AxiosError;
       console.error('Registration error:', axiosError.response?.data || axiosError.message);
       if (axiosError.message.includes('Network Error')) {
-        throw new Error('Network error. Please check if the server is running.');
+        throw new Error('Network error or CORS issue. Please check that the server allows requests from ' + window.location.origin);
       } else {
         throw new Error(
           axiosError.response?.data?.message || 

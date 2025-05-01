@@ -11,8 +11,21 @@ interface ApiStatus {
   origin: string;
 }
 
+interface CorsDebug {
+  message: string;
+  timestamp: string;
+  requestOrigin: string;
+  host: string;
+  allowedOrigins: string[];
+  isVercelDomain: boolean | string;
+  originAllowed: boolean | string;
+  corsConfigured: boolean;
+  headers: Record<string, string>;
+}
+
 const TestApi = () => {
   const [apiStatus, setApiStatus] = useState<ApiStatus | null>(null);
+  const [corsDebug, setCorsDebug] = useState<CorsDebug | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { checkApiConnection } = useAuth();
@@ -28,6 +41,15 @@ const TestApi = () => {
         // Direct axios call to test the exact URL
         const response = await axios.get(`${API_URL}/api/status`);
         setApiStatus(response.data);
+        
+        // Get CORS debug info
+        try {
+          const corsResponse = await axios.get(`${API_URL}/api/cors-debug`);
+          setCorsDebug(corsResponse.data);
+        } catch (corsErr: any) {
+          console.error('CORS debug error:', corsErr);
+        }
+        
         setLoading(false);
       } catch (err: any) {
         console.error('API test error:', err);
@@ -42,6 +64,15 @@ const TestApi = () => {
   const handleRefresh = async () => {
     setLoading(true);
     const success = await checkApiConnection();
+    
+    // Get CORS debug info
+    try {
+      const corsResponse = await axios.get(`${API_URL}/api/cors-debug`);
+      setCorsDebug(corsResponse.data);
+    } catch (corsErr: any) {
+      console.error('CORS debug error:', corsErr);
+    }
+    
     setLoading(false);
     if (!success) {
       setError('Failed to connect to API');
@@ -54,6 +85,7 @@ const TestApi = () => {
       
       <div className="mb-4">
         <p><strong>API URL:</strong> {API_URL}</p>
+        <p><strong>Current Origin:</strong> {window.location.origin}</p>
       </div>
       
       {loading && (
@@ -88,6 +120,26 @@ const TestApi = () => {
           <p><strong>Time:</strong> {apiStatus.time}</p>
           <p><strong>CORS:</strong> {apiStatus.cors}</p>
           <p><strong>Request Origin:</strong> {apiStatus.origin}</p>
+        </div>
+      )}
+      
+      {corsDebug && (
+        <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4">
+          <p className="font-bold">CORS Debug Information</p>
+          <p><strong>Request Origin:</strong> {corsDebug.requestOrigin}</p>
+          <p><strong>Host:</strong> {corsDebug.host}</p>
+          <p><strong>Origin Allowed:</strong> {String(corsDebug.originAllowed)}</p>
+          <p><strong>Is Vercel Domain:</strong> {String(corsDebug.isVercelDomain)}</p>
+          <p><strong>CORS Configured:</strong> {corsDebug.corsConfigured ? 'Yes' : 'No'}</p>
+          
+          <div className="mt-3">
+            <p className="font-semibold">Allowed Origins:</p>
+            <ul className="list-disc list-inside ml-2">
+              {corsDebug.allowedOrigins.map((origin, index) => (
+                <li key={index} className="text-xs">{origin}</li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
       
