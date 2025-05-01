@@ -20,10 +20,11 @@ const allowedOrigins = [
   'https://snipstash-client.vercel.app',
   'https://snip-stash-88nc.vercel.app',
   'https://snip-stash-88nc-cwrwfrk3v-ashmita41s-projects.vercel.app',
-  'https://snip-stash-ashmita41.vercel.app',
-  // Allow all Vercel preview deployments
-  /\.vercel\.app$/
+  'https://snip-stash-ashmita41.vercel.app'
 ];
+
+// Vercel deployment regex pattern
+const vercelPattern = /\.vercel\.app$/;
 
 // Middleware
 app.use(cors({
@@ -32,24 +33,20 @@ app.use(cors({
     if (!origin) return callback(null, true);
     
     // Check if the origin is in our allowedOrigins array
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
     
-    // Check if origin matches any regex pattern (for Vercel preview deployments)
-    const matched = allowedOrigins.some(pattern => {
-      if (pattern instanceof RegExp) {
-        return pattern.test(origin);
-      }
-      return false;
-    });
-    
-    if (matched) {
+    // Check if origin matches Vercel pattern
+    if (vercelPattern.test(origin)) {
       return callback(null, true);
     }
     
     // Log the blocked origin for debugging
     console.log(`Blocked origin: ${origin}`);
+    console.log(`Request headers:`, JSON.stringify({
+      origin: origin
+    }, null, 2));
     const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
     return callback(new Error(msg), false);
   },
@@ -108,6 +105,22 @@ app.get('/api/status', (req, res) => {
     time: new Date().toISOString(),
     cors: 'enabled',
     origin: req.headers.origin || 'unknown'
+  });
+});
+
+// CORS debug endpoint
+app.get('/api/cors-debug', (req, res) => {
+  const headers = req.headers;
+  res.json({
+    message: 'CORS debug information',
+    timestamp: new Date().toISOString(),
+    requestOrigin: headers.origin || 'none',
+    host: headers.host,
+    allowedOrigins: allowedOrigins,
+    isVercelDomain: headers.origin ? vercelPattern.test(headers.origin) : 'no origin',
+    headers: {
+      ...headers
+    }
   });
 });
 
